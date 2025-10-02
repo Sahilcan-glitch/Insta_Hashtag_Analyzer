@@ -77,14 +77,14 @@ if st.button("Search"):
                 st.dataframe(df)
 
                 # CSV download
-                    # Filter DataFrame to only required columns
-                    columns_to_keep = [
-                        "id", "shortCode", "caption", "hashtags", "mentions", "url",
-                        "likeCount", "commentCount", "timestamp", "ownerUsername", "productType"
-                    ]
-                    filtered_df = df[[col for col in columns_to_keep if col in df.columns]]
-                    csv = filtered_df.to_csv(index=False)
-                    st.download_button("Download CSV", data=csv, file_name=f"{hashtag}_posts.csv")
+                # Filter DataFrame to only required columns
+                columns_to_keep = [
+                    "id", "shortCode", "caption", "hashtags", "mentions", "url",
+                    "likeCount", "commentCount", "timestamp", "ownerUsername", "productType"
+                ]
+                filtered_df = df[[col for col in columns_to_keep if col in df.columns]]
+                csv = filtered_df.to_csv(index=False)
+                st.download_button("Download CSV", data=csv, file_name=f"{hashtag}_posts.csv")
 
         except Exception as e:
             st.error(f"Error fetching data: {e}")
