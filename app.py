@@ -4,7 +4,12 @@ import streamlit as st
 from apify_client import ApifyClient
 import pandas as pd
 import numpy as np
-import plotly.express as px
+
+# Plotly is optional; avoid crashing if not installed
+try:
+    import plotly.express as px
+except Exception:  # ModuleNotFoundError or other import issues
+    px = None
 
 # -----------------------------
 # Load .env and get API token
@@ -28,6 +33,12 @@ st.title("📸 Instagram Hashtag Analyzer")
 # Helper: Render Reach & Impressions pie charts by content type
 def render_reach_impressions_pies(df_in: pd.DataFrame, type_col: str = "productType") -> None:
     if df_in is None or df_in.empty:
+        return
+    if px is None:
+        st.info(
+            "Plotly is not installed, so pie charts are disabled. "
+            "Install it with `pip install plotly` or add `plotly` to requirements.txt and redeploy."
+        )
         return
     work = df_in.copy()
     # Ensure numeric columns exist and are numeric
