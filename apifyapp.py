@@ -5,16 +5,13 @@ from apify_client import ApifyClient
 import pandas as pd
 
 # -----------------------------
-# Load environment variables
+# Load .env and get API token
 # -----------------------------
-# First, try to load from .env (for local use)
 load_dotenv()
-
-# Then, try Streamlit secrets (for Streamlit Cloud)
-APIFY_TOKEN = os.getenv("APIFY_TOKEN") or st.secrets.get("APIFY_TOKEN")
+APIFY_TOKEN = os.getenv("APIFY_TOKEN")
 
 if not APIFY_TOKEN:
-    raise ValueError("APIFY_TOKEN not found. Please set it in .env (local) or in Streamlit Secrets (Cloud).")
+    raise ValueError("APIFY_TOKEN not found. Please set it in the .env file.")
 
 # Initialize Apify client
 client = ApifyClient(APIFY_TOKEN)
@@ -36,7 +33,6 @@ if st.button("Search"):
         st.info(f"Fetching posts for #{hashtag}... This may take a few seconds.")
 
         try:
-            # Apify actor ID for Instagram hashtag scraper
             actor_id = "apify/instagram-hashtag-scraper"
 
             run_input = {
@@ -44,10 +40,8 @@ if st.button("Search"):
                 "resultsLimit": max_posts
             }
 
-            # Run the actor
             run = client.actor(actor_id).call(run_input=run_input)
 
-            # Get dataset items
             dataset_id = run["defaultDatasetId"]
             dataset = client.dataset(dataset_id)
             items = list(dataset.list_items().items)
@@ -70,11 +64,11 @@ if st.button("Search"):
                 # Display top posts images
                 # -----------------------------
                 st.subheader("🖼 Top Posts Preview")
-                if "imageUrl" in df.columns:
-                    top_images = df["imageUrl"].dropna().head(10)
-                    cols = st.columns(5)
-                    for idx, img_url in enumerate(top_images):
-                        cols[idx % 5].image(img_url, use_column_width=True)
+                top_images = df.head(10)["imageUrl"].dropna() if "imageUrl" in df.columns else []
+
+                cols = st.columns(5)
+                for idx, img_url in enumerate(top_images):
+                    cols[idx % 5].image(img_url, use_column_width=True)
 
                 # -----------------------------
                 # Display full dataframe
@@ -83,8 +77,14 @@ if st.button("Search"):
                 st.dataframe(df)
 
                 # CSV download
-                csv = df.to_csv(index=False)
-                st.download_button("Download CSV", data=csv, file_name=f"{hashtag}_posts.csv")
+                    # Filter DataFrame to only required columns
+                    columns_to_keep = [
+                        "id", "shortCode", "caption", "hashtags", "mentions", "url",
+                        "likeCount", "commentCount", "timestamp", "ownerUsername", "productType"
+                    ]
+                    filtered_df = df[[col for col in columns_to_keep if col in df.columns]]
+                    csv = filtered_df.to_csv(index=False)
+                    st.download_button("Download CSV", data=csv, file_name=f"{hashtag}_posts.csv")
 
         except Exception as e:
             st.error(f"Error fetching data: {e}")
